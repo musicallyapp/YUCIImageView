@@ -10,7 +10,9 @@
 
 #if __has_include(<GLKit/GLKView.h>)
 
-@interface YUCIImageGLKRenderer () <GLKViewDelegate>
+@interface YUCIImageGLKRenderer () <GLKViewDelegate, GLKViewControllerDelegate>
+
+@property (nonatomic,strong) GLKViewController *glkViewController;
 
 @property (nonatomic,strong) EAGLContext *GLContext;
 
@@ -35,6 +37,12 @@
         self.view = [[GLKView alloc] initWithFrame:CGRectZero context:GLContext];
         self.view.delegate = self;
         self.view.contentScaleFactor = UIScreen.mainScreen.scale;
+        
+        GLKViewController * viewController = [[GLKViewController alloc] initWithNibName:nil bundle:nil];
+        viewController.view = self.view;
+        viewController.delegate = self;
+        viewController.preferredFramesPerSecond = 60;
+        self.glkViewController = viewController;
     }
     return self;
 }
@@ -46,12 +54,23 @@
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect {
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
-    [self.context drawImage:self.image inRect:(CGRect){CGPointZero,CGSizeApplyAffineTransform(rect.size, CGAffineTransformMakeScale(self.view.contentScaleFactor, self.view.contentScaleFactor))} fromRect:self.image.extent];
+    if (self.image)
+    {
+        [self.context drawImage:self.image inRect:(CGRect){CGPointZero,CGSizeApplyAffineTransform(rect.size, CGAffineTransformMakeScale(self.view.contentScaleFactor, self.view.contentScaleFactor))} fromRect:self.image.extent];
+    }
 }
 
 - (void)renderImage:(CIImage *)image {
     self.image = image;
-    [self.view setNeedsDisplay];
+    //[self.view setNeedsDisplay];
+}
+
+- (void)glkViewControllerUpdate:(GLKViewController *)controller {
+    
+}
+
+- (void)glkViewController:(GLKViewController *)controller willPause:(BOOL)pause {
+    
 }
 
 @end
