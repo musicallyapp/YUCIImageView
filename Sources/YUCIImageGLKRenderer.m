@@ -51,6 +51,11 @@
     return [self initWithEAGLContext:nil];
 }
 
+- (void)dealloc {
+    self.view.delegate = nil;
+    self.glkViewController.delegate = nil;
+}
+
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect {
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
