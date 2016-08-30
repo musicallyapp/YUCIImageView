@@ -12,13 +12,14 @@
 
 @interface YUCIImageGLKRenderer () <GLKViewDelegate, GLKViewControllerDelegate>
 
-@property (nonatomic,strong) GLKViewController *glkViewController;
-
 @property (nonatomic,strong) EAGLContext *GLContext;
 
 @property (nonatomic,strong) GLKView *view;
 
 @property (nonatomic,strong) CIImage *image;
+
+@property (nonatomic, assign) BOOL inactive;
+@property (nonatomic, assign) BOOL background;
 
 @end
 
@@ -38,25 +39,49 @@
         self.view.delegate = self;
         self.view.contentScaleFactor = UIScreen.mainScreen.scale;
         
-        GLKViewController * viewController = [[GLKViewController alloc] initWithNibName:nil bundle:nil];
-        viewController.view = self.view;
-        viewController.delegate = self;
-        viewController.preferredFramesPerSecond = 60;
-        self.glkViewController = viewController;
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resignActive) name:UIApplicationWillResignActiveNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(enterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(becomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+        
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)resignActive
+{
+    self.inactive = YES;
+}
+
+- (void)enterBackground
+{
+    self.background = YES;
+}
+
+- (void)willEnterForeground
+{
+    self.background = NO;
+}
+
+- (void)becomeActive
+{
+    self.inactive = NO;
 }
 
 - (instancetype)init {
     return [self initWithEAGLContext:nil];
 }
 
-- (void)dealloc {
-    self.view.delegate = nil;
-    self.glkViewController.delegate = nil;
-}
-
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect {
+    if (self.inactive || self.background)
+    {
+        return;
+    }
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     if (self.image)
@@ -66,16 +91,12 @@
 }
 
 - (void)renderImage:(CIImage *)image {
+    if (self.inactive || self.background)
+    {
+        return;
+    }
     self.image = image;
-    //[self.view setNeedsDisplay];
-}
-
-- (void)glkViewControllerUpdate:(GLKViewController *)controller {
-    
-}
-
-- (void)glkViewController:(GLKViewController *)controller willPause:(BOOL)pause {
-    
+    [self.view setNeedsDisplay];
 }
 
 @end
