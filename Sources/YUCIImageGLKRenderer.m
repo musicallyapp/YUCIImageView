@@ -38,12 +38,12 @@
         self.view = [[GLKView alloc] initWithFrame:CGRectZero context:GLContext];
         self.view.delegate = self;
         self.view.contentScaleFactor = UIScreen.mainScreen.scale;
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resignActive) name:UIApplicationWillResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(enterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(becomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
-        
+
     }
     return self;
 }
@@ -51,6 +51,18 @@
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    self.view.delegate = nil;
+    self.view = nil;
+    if ([NSThread isMainThread])
+    {
+        [EAGLContext setCurrentContext:nil];
+    }
+    else
+    {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [EAGLContext setCurrentContext:nil];
+        });
+    }
 }
 
 - (void)resignActive
